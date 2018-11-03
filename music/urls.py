@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+
 app_name = 'music'
 urlpatterns = [
     # /music/
@@ -10,4 +11,5 @@ urlpatterns = [
 
     # /music/<album_id>/favorite
     path('<int:album_id>/favorite/', views.favorite, name='favorite'),
+    path('album/add/', views.AlbumCreate.as_view(), name='album-add')
 ]
