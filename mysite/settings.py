@@ -32,6 +32,8 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'music.apps.MusicConfig',
+    'community.apps.CommunityConfig',
+    'django_echarts',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

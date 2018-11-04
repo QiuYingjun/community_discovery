@@ -1,0 +1,27 @@
+{% extends 'community/base.html' %}
+{% load staticfiles%}
+{%block body%}
+<form class="form-horizontal" action="{% url 'community:discover' %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <select name="filename">
+        {% for f in files %}
+        <option value="{{f}}">{{f}}</option>
+        {% endfor %}
+    </select>
+    <div >
+        <label>起始时间：</label>
+        <input name="start_time" type="datetime-local" />
+    </div>
+    <div>
+        <label>终止时间：</label>
+        <input name="end_time" type="datetime-local" />
+    </div>
+    <div>
+        <label>最小IP数</label>
+        <input name="size" pattern="[0-9]+" type="text" value="5" />
+    </div>
+    <input type="submit" class="btn btn-success"/>
+</form>
+
+{{myechart|safe}}
+{% endblock %}
