@@ -12,9 +12,9 @@ import numpy as np
 import django.utils.timezone as timezone
 from collections import Counter
 
-REMOTE_HOST = "https://pyecharts.github.io/assets/js"
-DATA_SET_DIR = r"E:\mysite\community\static\comunity\dataset"
-RESULT_DIR = r"E:\mysite\community\static\comunity\result"
+PROJECT_DIR = os.path.dirname(__file__)
+DATA_SET_DIR = os.path.join(PROJECT_DIR, "static/community/dataset")
+RESULT_DIR = os.path.join(PROJECT_DIR, "static/community/result")
 
 # 至少有这么IP对才会做聚类操作
 LEAST_IP_PAIR_FOR_CLUSTERING = 3
