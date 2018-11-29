@@ -6,8 +6,11 @@ import time
 import os
 import pandas as pd
 from sklearn.cluster import DBSCAN
-from sklearn.preprocessing import MinMaxScaler, LabelEncoder
+from sklearn.preprocessing import MinMaxScaler, LabelEncoder, StandardScaler
 from .models import Result, Community
+import numpy as np
+import django.utils.timezone as timezone
+from collections import Counter
 
 REMOTE_HOST = "https://pyecharts.github.io/assets/js"
 DATA_SET_DIR = r"E:\mysite\community\static\comunity\dataset"
@@ -24,17 +27,19 @@ def index(request):
     :param request:
     :return:
     """
-    if Result.objects.all():
-        last_result = Result.objects.latest('result_time')
-        df, last_result, communities = get_result_df(log_filename=last_result.log_filename,
-                                                     start_time=last_result.start_time,
-                                                     end_time=last_result.end_time,
-                                                     smallest_size=last_result.smallest_size)
-        g = get_graph(df)
-    else:
-        last_result = Result()
-        g = get_graph(pd.DataFrame())
-        communities = {}
+    # if Result.objects.all():
+    #     last_result = Result.objects.latest('result_time')
+    #     df, last_result, communities = get_result_df(log_filename=last_result.log_filename,
+    #                                                  start_time=last_result.start_time,
+    #                                                  end_time=last_result.end_time,
+    #                                                  smallest_size=last_result.smallest_size)
+    #     g = get_graph(df)
+    # else:
+    print('index')
+    last_result = Result()
+    g = get_graph(pd.DataFrame())
+    communities = {}
+
     context = dict(
         graph=g.render_embed(),
         files=os.listdir(DATA_SET_DIR),
@@ -52,24 +57,32 @@ def get_graph(df):
     :param df: df
     :return:
     """
-    nodes = []
+    print('get_graph')
     links = []
-    exist_nodes = set()
+    exist_nodes = {}
 
     for i in df.index:
         source = df.loc[i, 'ip1']
         target = df.loc[i, 'ip2']
         if source not in exist_nodes:
-            nodes.append({'name': source, 'symbolSize': 10})
-            exist_nodes.add(source)
+            exist_nodes[source] = []
         if target not in exist_nodes:
-            nodes.append({'name': target, 'symbolSize': 10})
-            exist_nodes.add(target)
-
+            exist_nodes[target] = []
+        exist_nodes[source].append(int(df.loc[i, 'community_tag']))
+        exist_nodes[target].append(int(df.loc[i, 'community_tag']))
         links.append({'source': source, 'target': target})
-
+    nodes = []
+    categories = []
+    for node, cato_list in exist_nodes.items():
+        # 取众数
+        cat = Counter(cato_list).most_common(1)[0][0]
+        nodes.append({'name': node, 'symbolSize': 10, 'value': cat})
+        categories.append(cat)
+    categories = LabelEncoder().fit_transform(categories)
+    for node, cat in zip(nodes, categories):
+        node['category'] = cat
     g = Graph(title="拓扑结构", subtitle='IP:{} Links:{}'.format(len(nodes), len(links)), width=1200, height=500)
-    g.add("", nodes, links)
+    g.add("", nodes, links, layout='circular', categories=list(categories))
     return g
 
 
@@ -83,21 +96,44 @@ def get_result_df(log_filename, start_time, end_time, smallest_size):
     :param smallest_size:
     :return:
     """
-    result_filename = '{}_{}_{}_{}.csv'.format(log_filename, start_time, end_time, smallest_size).replace(':', '')
-    if os.path.exists(result_filename):
-        df = pd.read_csv(result_filename)
-        result = Result.object.latest(pk=result_filename)
+    print('get_result_df')
+    result_filename = '{}_{}_{}.csv'.format(log_filename, start_time, end_time).replace(':', '')
+    if os.path.exists(os.path.join(RESULT_DIR, result_filename)):
+        df = pd.read_csv(os.path.join(RESULT_DIR, result_filename))
+        # 移除小社团
+        df = remove_small_community(df, smallest_size=smallest_size)
+
+        result = Result.objects.get(result_filename__exact=result_filename)
+        result.result_time = timezone.now()
+        result.smallest_size = smallest_size
+        result.save()
     else:
+        # 读入
         df = read_log(log_filename, start_time, end_time)
+        df.to_csv(os.path.join(RESULT_DIR, '_df1.csv'), index=False)
+        # 清洗
         df = wash_log(df)
+        df.to_csv(os.path.join(RESULT_DIR, '_df2.csv'), index=False)
+        # 节点区分
         df = partition_entities(df)
+        df.to_csv(os.path.join(RESULT_DIR, '_df3.csv'), index=False)
+        # 边分区
         df = partition_links(df)
+        df.to_csv(os.path.join(RESULT_DIR, '_df4.csv'), index=False)
+        # 交换IP使领袖节点在同一列
         df = exchange_fields(df)
+        df.to_csv(os.path.join(RESULT_DIR, '_df5.csv'), index=False)
+        # 对拓扑相似的边聚类
         df = group_and_cluster(df)
-        df = post_processing(df, smallest_size)
+        df.to_csv(os.path.join(RESULT_DIR, '_df6.csv'), index=False)
+        # 标签重编码
+        df = encode_tag(df)
         df.to_csv(os.path.join(RESULT_DIR, result_filename), index=False)
+        # 移除小社团
+        df = remove_small_community(df, smallest_size=smallest_size)
 
         result = Result()
+        result.result_time = timezone.now()
         result.smallest_size = smallest_size
         result.end_time = end_time
         result.start_time = start_time
@@ -114,8 +150,9 @@ def get_result_df(log_filename, start_time, end_time, smallest_size):
         community.ip_counts = len(set(community_table['ip1']) | set(community_table['ip2']))
         community.link_counts = community_table.shape[0]
         community.leader_ip = community_table['ip2'].mode()[0]
-        community.save()
+        # community.save()
         communities.add(community)
+    communities = sorted(communities, key=lambda c: c.ip_counts, reverse=True)
 
     return df, result, communities
 
@@ -127,6 +164,7 @@ def discover(request):
     :param request:
     :return: 渲染后的页面
     """
+    print('discover')
     log_filename = request.POST['filename']
     start_time = request.POST['start_time']
     end_time = request.POST['end_time']
@@ -158,6 +196,7 @@ def get_hist(df, community_tag, feature_cols):
     #                 'pkts21_min','pkts21_mid','pkts21_max',
     #                 'pkl12_min','pkl12_mid','pkl12_max',
     #                 'pkl21_min','pkl21_mid','pkl21_max']
+    print('get_hist')
 
     community_table = df[df['community_tag'] == community_tag].copy()[feature_cols]
     axis_min = int(community_table.values.min())
@@ -181,6 +220,7 @@ def detail(request, community_tag):
     :param community_tag:
     :return:
     """
+    print('detail')
     last_result = Result.objects.latest('result_time')
     df, last_result, communities = get_result_df(log_filename=last_result.log_filename,
                                                  start_time=last_result.start_time,
@@ -216,23 +256,25 @@ def read_log(filename, start_time, end_time):
     :param end_time:
     :return: DataFrame log_df
     """
+    print('read_log')
     useful_columns = ['ip1', 'ip2', 'port1', 'port2', 'proto', 'pkts12', 'pkts21', 'bytes12', 'bytes21', 'etime',
                       'class', 'app']
     log_df = pd.read_csv(os.path.join(DATA_SET_DIR, filename), usecols=useful_columns)
     start_time = time.mktime(time.strptime(start_time, "%Y-%m-%dT%H:%M"))
     end_time = time.mktime(time.strptime(end_time, "%Y-%m-%dT%H:%M"))
 
-    return log_df[log_df['etime'] >= start_time][log_df['etime'] <= end_time]
+    return log_df[log_df['etime'] >= start_time][log_df['etime'] < end_time]
 
 
 def wash_log(log_df):
     """
+    去重复行
 
     :param log_df: 原始log_df
     :return: clean_df
     """
+    print('wash_log')
 
-    # 去重复行
     clean_df = log_df.drop_duplicates(['ip1', 'ip2', 'port1', 'port2', 'proto'], keep='last')
 
     return clean_df
@@ -246,6 +288,7 @@ def construct_topology(clean_df):
     :param clean_df:
     :return:
     """
+    print('construct_topology')
     entity_neighbours = {}
     for i in clean_df.index:
         entity1 = clean_df.at[i, 'entity1']
@@ -266,6 +309,7 @@ def distribute_num(entity_neighbours):
     :param entity_neighbours:
     :return:
     """
+    print('distribute_num')
     num = 0
     entity_num = {}
     for entity1 in entity_neighbours:
@@ -294,6 +338,7 @@ def partition_entities(clean_df):
     :param clean_df:
     :return:
     """
+    print('partition_entities')
     clean_df['entity1'] = clean_df['ip1'] + '_' + clean_df['port1'].astype(str)
     clean_df['entity2'] = clean_df['ip2'] + '_' + clean_df['port2'].astype(str)
 
@@ -321,6 +366,7 @@ def partition_links(label_entities_df):
     :param label_entities_df:
     :return:
     """
+    print('partition_links')
 
     for i in label_entities_df.index:
         if label_entities_df.at[i, 'part1'] < label_entities_df.at[i, 'part2']:
@@ -338,6 +384,7 @@ def determine_leader(label_links_df):
     :param label_links_df:
     :return: {link_label:leader_ip}
     """
+    print('determine_leader')
     label_leader = {}
     link_groups = label_links_df.groupby(by='link_label')
     for link_label, same_label_df in link_groups:
@@ -353,6 +400,7 @@ def exchange_fields(label_links_df):
     :param label_links_df:
     :return:
     """
+    print('exchange_fields')
     label_links_df = label_links_df[label_links_df['link_label'] != '-1_-1']
     label_leader = determine_leader(label_links_df)
 
@@ -386,6 +434,7 @@ def group_and_cluster(leader2_df):
     :param leader2_df:
     :return: {link_label:feature_df}
     """
+    print('group_and_cluster')
 
     label_group = leader2_df.groupby(by=['link_label'])
     community_result = pd.DataFrame()
@@ -403,6 +452,7 @@ def group_and_cluster(leader2_df):
 
 
 def extract_feature_df(same_label_df):
+    print('extract_feature_df')
     feature_df = pd.DataFrame(columns=['port1', 'port2', 'proto',
                                        'pkts12_min', 'pkts12_mid', 'pkts12_max',
                                        'pkts21_min', 'pkts21_mid', 'pkts21_max',
@@ -440,19 +490,32 @@ def extract_feature_df(same_label_df):
     return feature_df, verification_df
 
 
+def normalize(X, func=None):
+    print('normalize')
+
+    if func == 'atan':
+        X = np.arctan(X) * 2 / np.pi
+    elif func == 'z-score':
+        X = StandardScaler().fit_transform(X)
+    else:
+        X = MinMaxScaler().fit_transform(X)
+    return X
+
+
 def cluster(feature_df):
     """
 
     :param feature_df:
     :return:
     """
+    print('cluster')
     X = feature_df.values
-    X = MinMaxScaler().fit_transform(X)
+    X = normalize(X)
     dbscan = DBSCAN(eps=1, min_samples=2, metric='manhattan')
     return dbscan.fit_predict(X)
 
 
-def post_processing(community_result_df, smallest_size=5):
+def encode_tag(community_result_df):
     """
 
     :param community_result_df:
@@ -460,6 +523,7 @@ def post_processing(community_result_df, smallest_size=5):
     :return:
     """
     # ip列
+    print('post_processing')
     ip1s = []
     ip2s = []
     for ip1, ip2 in community_result_df.index:
@@ -476,13 +540,12 @@ def post_processing(community_result_df, smallest_size=5):
     tags = community_result_df['topology_tag'].astype(str) + '_' + community_result_df['behavior_tag'].astype(str)
     community_result_df['community_tag'] = pd.Series(LabelEncoder().fit_transform(tags),
                                                      index=community_result_df.index)
-    # 移除小社团
-    community_result_df = remove_small_community(community_result_df, smallest_size=smallest_size)
 
     return community_result_df
 
 
 def give_ip_tag(community_result_df):
+    print('give_ip_tag')
     # 为节点分配所属社团，用于显示颜色
     ip_belong = {}
     for i in community_result_df.index:
@@ -514,6 +577,7 @@ def remove_small_community(community_result_df, smallest_size=5):
     :param smallest_size: 最小IP数
     :return:
     """
+    print('remove_small_community')
     tag_ips = {}
     for i in community_result_df.index:
         tag = community_result_df.loc[i, 'community_tag']
