@@ -15,6 +15,8 @@ from collections import Counter
 PROJECT_DIR = os.path.dirname(__file__)
 DATA_SET_DIR = os.path.join(PROJECT_DIR, "static/community/dataset")
 RESULT_DIR = os.path.join(PROJECT_DIR, "static/community/result")
+if not os.path.exists(RESULT_DIR):
+    os.makedirs(RESULT_DIR)
 
 # 至少有这么IP对才会做聚类操作
 LEAST_IP_PAIR_FOR_CLUSTERING = 3
