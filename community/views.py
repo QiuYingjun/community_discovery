@@ -49,7 +49,7 @@ def index(request):
         communities=communities
     )
 
-    return render(request, 'community/pyecharts.html', context)
+    return render(request, 'community/discover.html', context)
 
 
 def get_graph(df):
@@ -181,7 +181,7 @@ def discover(request):
         last_result=last_result,
 
     )
-    return render(request, 'community/pyecharts.html', context)
+    return render(request, 'community/discover.html', context)
 
 
 def get_hist(df, community_tag, feature_cols):
