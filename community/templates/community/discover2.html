@@ -1,0 +1,59 @@
+{% extends 'community/base.html' %}
+{% load staticfiles%}
+{%block body%}
+<div class="container">
+
+    <form class="form-horizontal container" action="{% url 'community:discover' %}" method="post"
+          enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-group">
+        <label>文件：</label>
+        <select name="filename">
+            <option value="{{last_result.log_filename}}">{{last_result.log_filename}}</option>
+            {% for f in files %}
+            <option value="{{f}}">{{f}}</option>
+            {% endfor %}
+        </select>
+        &nbsp&nbsp
+        <label>算法：</label>
+        <select name="algorithm">
+            <option value="{{ algorithms.0 }}">{{ algorithms.0 }}</option>
+            {% for f in algorithms %}
+            <option value="{{f}}">{{f}}</option>
+            {% endfor %}
+        </select>
+        &nbsp&nbsp
+        <label>起始时间：</label>
+        <input name="start_time" type="datetime-local" value="{{last_result.start_time}}"/>
+        &nbsp&nbsp
+        <label>终止时间：</label>
+        <input name="end_time" type="datetime-local" value="{{last_result.end_time}}"/>
+        &nbsp&nbsp
+        <label>最小IP数：</label>
+        <input name="smallest_size" pattern="[0-9]+" type="text" value="{{last_result.smallest_size}}" />
+        &nbsp&nbsp
+        <input type="submit" class="btn btn-primary"/>
+    </div>
+</form>
+{{graph}}
+<div class="container w-75 p-3">
+  <table class="table table-striped table-responsive w-75 p-3" >
+    <thead class="thead-dark">
+      <tr>
+        <th class="col-md-3 text-center">编号</th>
+        <th class="col-md-3 text-center">领袖IP</th>
+        <th class="col-md-3 text-center">总IP数</th>
+        <th class="col-md-3 text-center">总边数</th>
+      </tr>
+    </thead>
+    {% for c in communities %}
+      <tr class="text-center">
+        <td class="col-md-3"><a href="{% url 'community:detail' c.community_tag %}">社团{{c.community_tag}}</a></td>
+        <td class="col-md-3">{{c.leader_ip}}</td>
+        <td class="col-md-3">{{c.ip_counts}}</td>
+        <td class="col-md-3">{{c.link_counts}}</td>
+      </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
