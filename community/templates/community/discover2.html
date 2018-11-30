@@ -3,7 +3,7 @@
 {%block body%}
 <div class="container">
 
-    <form class="form-horizontal container" action="{% url 'community:discover' %}" method="post"
+    <form class="form-horizontal container" action="{% url 'community:discover2' %}" method="post"
           enctype="multipart/form-data">
     {% csrf_token %}
     <div class="form-group">
@@ -55,5 +55,6 @@
       </tr>
     {% endfor %}
   </table>
+</div>
 </div>
 {% endblock %}
