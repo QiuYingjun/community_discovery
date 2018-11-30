@@ -1,4 +1,3 @@
 *.pyc
 .idea
 community/static/community/result/
-db.sqlite3
