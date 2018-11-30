@@ -11,6 +11,7 @@ from .models import Result, Community
 import numpy as np
 import django.utils.timezone as timezone
 from collections import Counter
+from django.core.exceptions import ObjectDoesNotExist
 
 PROJECT_DIR = os.path.dirname(__file__)
 DATA_SET_DIR = os.path.join(PROJECT_DIR, "static/community/dataset")
@@ -105,10 +106,21 @@ def get_result_df(log_filename, start_time, end_time, smallest_size):
         # 移除小社团
         df = remove_small_community(df, smallest_size=smallest_size)
 
-        result = Result.objects.get(result_filename__exact=result_filename)
+        try:
+            result = Result.objects.get(result_filename__exact=result_filename)
+        except ObjectDoesNotExist:
+            result = Result()
+            result.end_time = end_time
+            result.start_time = start_time
+            result.log_filename = log_filename
+            result.community_counts = len(set(df['community_tag']))
+            result.ip_counts = len(set(df['ip1']) | set(df['ip2']))
+            result.result_filename = result_filename
+
         result.result_time = timezone.now()
         result.smallest_size = smallest_size
         result.save()
+
     else:
         # 读入
         df = read_log(log_filename, start_time, end_time)
