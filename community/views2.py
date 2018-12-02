@@ -12,7 +12,8 @@ import numpy as np
 import django.utils.timezone as timezone
 from collections import Counter
 
-PROJECT_DIR = os.path.dirname(__file__)
+#PROJECT_DIR = os.path.dirname(__file__)
+PROJECT_DIR = "/home/cd/"
 DATA_SET_DIR = os.path.join(PROJECT_DIR, "static/community/dataset")
 RESULT_DIR = os.path.join(PROJECT_DIR, "static/community/result")
 if not os.path.exists(RESULT_DIR):
@@ -100,7 +101,8 @@ def get_result_df(log_filename, algorithm, formatted_args, args_dict, interval, 
     :return:
     """
     print('get_result_df')
-    result_filename = '{}_{}_{}.csv'.format(log_filename, start_time, end_time).replace(':', '')
+    result_filename = '{}_{}_{}.csv'.format(log_filename, algorithm, formatted_args, \
+                                            interval, ordinal_number).replace(':', '')
     #todo
     if os.path.exists(os.path.join(RESULT_DIR, result_filename)):
         df = pd.read_csv(os.path.join(RESULT_DIR, result_filename))
