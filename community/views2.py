@@ -101,6 +101,7 @@ def get_result_df(log_filename, start_time, end_time, smallest_size):
     """
     print('get_result_df')
     result_filename = '{}_{}_{}.csv'.format(log_filename, start_time, end_time).replace(':', '')
+    #todo
     if os.path.exists(os.path.join(RESULT_DIR, result_filename)):
         df = pd.read_csv(os.path.join(RESULT_DIR, result_filename))
         # 移除小社团
@@ -247,7 +248,7 @@ def detail(request, community_tag):
         communities=communities
     )
 
-    return render(request, 'community/detail.html', context)
+    return render(request, 'community/detail2.html', context)
 
 
 def read_log(filename, start_time, end_time):

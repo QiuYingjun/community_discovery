@@ -48,7 +48,7 @@
     </thead>
     {% for c in communities %}
       <tr class="text-center">
-        <td class="col-md-3"><a href="{% url 'community:detail' c.community_tag %}">社团{{c.community_tag}}</a></td>
+        <td class="col-md-3"><a href="{% url 'community:detail2' c.community_tag %}">社团{{c.community_tag}}</a></td>
         <td class="col-md-3">{{c.leader_ip}}</td>
         <td class="col-md-3">{{c.ip_counts}}</td>
         <td class="col-md-3">{{c.link_counts}}</td>
