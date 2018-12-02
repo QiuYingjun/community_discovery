@@ -89,7 +89,7 @@ def get_graph(df):
     return g
 
 
-def get_result_df(log_filename, start_time, end_time, smallest_size):
+def get_result_df(log_filename, algorithm, formatted_args, args_dict, interval, ordinal_number):
     """
     根据指定参数得到发现结果表，如果已有则读取，没有则计算得到
 
@@ -160,6 +160,24 @@ def get_result_df(log_filename, start_time, end_time, smallest_size):
 
     return df, result, communities
 
+def format_algorithm_args(args):
+    formatted_args = ""
+    args_dict = {}
+    try:
+        items = args.strip().split(',')
+        for item in items:
+            exprs = item.strip().split('=')
+            for i in range(len(exprs)):
+                exprs[i] = exprs[i].strip()
+
+            args_dict[exprs[0]] = exprs[1]
+            formatted_args += exprs[0] + "=" + exprs[1] + ","
+        if len(formatted_args) > 0:
+            formatted_args = formatted_args[0 : len(formatted_args) - 1]
+    except:
+        pass
+
+    return formatted_args, args_dict
 
 def discover(request):
     """
@@ -170,11 +188,13 @@ def discover(request):
     """
     print('discover')
     log_filename = request.POST['filename']
-    start_time = request.POST['start_time']
-    end_time = request.POST['end_time']
-    smallest_size = request.POST['smallest_size']
-    df, last_result, communities = get_result_df(log_filename=log_filename, start_time=start_time, end_time=end_time,
-                                                 smallest_size=smallest_size)
+    algorithm = request.POST['algorithm']
+    formatted_args, args_dict = format_algorithm_args(request.POST['args'])
+    interval = int(request.POST['interval'])
+    ordinal_number = int(request.POST['ordinal_number'])
+    df, last_result, communities = get_result_df(log_filename=log_filename, algorithm=algorithm, \
+                                                 formatted_args=formatted_args, args_dict=args_dict, \
+                                                 interval=interval, ordinal_number=ordinal_number)
     g = get_graph(df)
     context = dict(
         graph=g.render_embed(),
