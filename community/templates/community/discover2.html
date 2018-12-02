@@ -18,11 +18,20 @@
         <label>算法：</label>
         <select name="algorithm">
             <option value="{{ algorithms.0 }}">{{ algorithms.0 }}</option>
-            {% for f in algorithms %}
-            <option value="{{f}}">{{f}}</option>
+            {% for a in algorithms %}
+            <option value="{{a}}">{{a}}</option>
             {% endfor %}
         </select>
         &nbsp&nbsp
+        <label>参数：</label>
+        <input name="args" type="text" value="{{last_result.args}}"/>
+        &nbsp&nbsp
+        <label>时间间隔：</label>
+        <input name="interval" type="text" value="{{last_result.interval}}"/>
+        &nbsp&nbsp
+        <label>序数：</label>
+        <input name="ordinal_number" type="text" value="{{last_result.ordinal_number}}"/>
+        <!--
         <label>起始时间：</label>
         <input name="start_time" type="datetime-local" value="{{last_result.start_time}}"/>
         &nbsp&nbsp
@@ -33,6 +42,7 @@
         <input name="smallest_size" pattern="[0-9]+" type="text" value="{{last_result.smallest_size}}" />
         &nbsp&nbsp
         <input type="submit" class="btn btn-primary"/>
+        -->
     </div>
 </form>
 {{graph}}
