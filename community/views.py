@@ -164,6 +164,7 @@ def get_result_df(log_filename, start_time, end_time, smallest_size):
         community.ip_counts = len(set(community_table['ip1']) | set(community_table['ip2']))
         community.link_counts = community_table.shape[0]
         community.leader_ip = community_table['ip2'].mode()[0]
+        community.purity = Counter(community_table['app']).most_common(1)[0][1]/len(community_table['app'])
         # community.save()
         communities.add(community)
     communities = sorted(communities, key=lambda c: c.ip_counts, reverse=True)
