@@ -10,6 +10,7 @@ from sklearn.preprocessing import MinMaxScaler, LabelEncoder, StandardScaler
 from .models import Result, Community
 import numpy as np
 import django.utils.timezone as timezone
+import sys
 from collections import Counter
 
 sys.path.append("/home/zhoumin/project/community_tracking/src/community_detect")
@@ -17,11 +18,11 @@ sys.path.append("/home/zhoumin/project/community_tracking/src/community_detect")
 from community_detect_our import Community_Detect_Our
 from stream_data import Stream_Data
 
-#PROJECT_DIR = os.path.dirname(__file__)
+# PROJECT_DIR = os.path.dirname(__file__)
 PROJECT_DIR = "/home/cd/"
-#DATA_SET_DIR = os.path.join(PROJECT_DIR, "static/community/dataset")
+# DATA_SET_DIR = os.path.join(PROJECT_DIR, "static/community/dataset")
 DATA_SET_DIR = os.path.join(PROJECT_DIR, "/home/zhoumin/project/community_tracking/labeled_log0202/")
-#RESULT_DIR = os.path.join(PROJECT_DIR, "static/community/result")
+# RESULT_DIR = os.path.join(PROJECT_DIR, "static/community/result")
 RESULT_DIR = os.path.join(PROJECT_DIR, "/home/zhoumin/project/community_tracking/results/")
 if not os.path.exists(RESULT_DIR):
     os.makedirs(RESULT_DIR)
@@ -30,6 +31,7 @@ if not os.path.exists(RESULT_DIR):
 LEAST_IP_PAIR_FOR_CLUSTERING = 3
 
 ALGORITHMS = ["lpa", "lpabs", "cdcbs"]
+
 
 def index(request):
     """
@@ -87,16 +89,17 @@ def get_graph(df):
     categories = []
 
     for node, cat in exist_nodes.items():
-    #     # 取众数
-    #     cat = Counter(cato_list).most_common(1)[0][0]
+        #     # 取众数
+        #     cat = Counter(cato_list).most_common(1)[0][0]
         nodes.append({'name': node, 'symbolSize': 10, 'value': cat})
-    #     categories.append(cat)
+    # categories.append(cat)
     # categories = LabelEncoder().fit_transform(categories)
     # for node, cat in zip(nodes, categories):
     #     node['category'] = cat
     g = Graph(title="拓扑结构", subtitle='IP:{} Links:{}'.format(len(nodes), len(links)), width=1200, height=500)
     g.add("", nodes, links, categories=list(categories))
     return g
+
 
 def get_ip_to_community(communities):
     ip_to_community = {}
@@ -105,6 +108,7 @@ def get_ip_to_community(communities):
             ip_to_community[ip] = tag
 
     return ip_to_community
+
 
 def convert_communities_result_to_df(data, communities):
     data_df = pd.DataFrame(data, columns=['ip1', 'ip2', 'time', 'app'])
@@ -119,11 +123,11 @@ def convert_communities_result_to_df(data, communities):
         community_tag1_list.append(ip_to_community[ip1])
         community_tag2_list.append(ip_to_community[ip2])
 
-    df = pd.DataFrame({'ip1': data_df['ip1'], 'ip2': data_df['ip2'], \
-                       'community_tag1': community_tag1_list, \
+    df = pd.DataFrame({'ip1': data_df['ip1'], 'ip2': data_df['ip2'], 'community_tag1': community_tag1_list,
                        'community_tag2': community_tag2_list})
 
     return df
+
 
 def detect_community(algorithm, args_dict, data):
     cdo = Community_Detect_Our()
@@ -144,6 +148,7 @@ def detect_community(algorithm, args_dict, data):
 
     return convert_communities_result_to_df(data, communities)
 
+
 def check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
     if not os.path.exists(os.path.join(DATA_SET_DIR, log_filename)):
         return False
@@ -163,33 +168,50 @@ def check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
         return False
     return True
 
-def get_result_df(log_filename, algorithm, formatted_args, args_dict, interval, ordinal_number):
+
+def get_args_from_str(formatted_args):
+    args_dict = {}
+    if formatted_args == "":
+        return args_dict
+    try:
+        exprs = formatted_args.split(',')
+        for expr in exprs:
+            items = expr.split('=')
+            args_dict[items[0]] = args_dict[items[1]]
+    except:
+        return {}
+
+    return args_dict
+
+
+def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_number):
     """
     根据指定参数得到发现结果表，如果已有则读取，没有则计算得到
 
+    :param ordinal_number: 
+    :param interval: 
+    :param formatted_args: 
+    :param algorithm: 
     :param log_filename:
-    :param start_time:
-    :param end_time:
-    :param smallest_size:
     :return:
     """
     print('get_result_df')
-    result_filename = '{}_{}_{}.csv'.format(log_filename, algorithm, formatted_args, \
-                                            interval, ordinal_number).replace(':', '')
+    result_filename = f'{log_filename}_{algorithm}_{formatted_args}.csv'.replace(':', '')
 
     df = pd.DataFrame(columns=['ip1', 'ip2', 'community_tag'])
 
-    if check_params(log_filename, algorithm, args_dict, interval, ordinal_number) == False:
+    args_dict = get_args_from_str(formatted_args)
+    if not check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
         return df, Result(), set()
-    #todo
+    # todo
     if os.path.exists(os.path.join(RESULT_DIR, result_filename)):
         df = pd.read_csv(os.path.join(RESULT_DIR, result_filename))
         # 移除小社团
-        #df = remove_small_community(df, smallest_size=smallest_size)
+        # df = remove_small_community(df, smallest_size=smallest_size)
 
         result = Result.objects.get(result_filename__exact=result_filename)
         result.result_time = timezone.now()
-        #result.smallest_size = smallest_size
+        # result.smallest_size = smallest_size
         result.save()
     else:
         # 读入
@@ -217,11 +239,11 @@ def get_result_df(log_filename, algorithm, formatted_args, args_dict, interval, 
         '''
         df.to_csv(os.path.join(RESULT_DIR, result_filename), index=False)
         # 移除小社团
-        #df = remove_small_community(df, smallest_size=smallest_size)
+        # df = remove_small_community(df, smallest_size=smallest_size)
 
         result = Result()
         result.result_time = timezone.now()
-        #result.smallest_size = smallest_size
+        # result.smallest_size = smallest_size
         result.interval = interval
         result.formatted_args = formatted_args
         result.ordinal_number = ordinal_number
@@ -244,24 +266,24 @@ def get_result_df(log_filename, algorithm, formatted_args, args_dict, interval, 
 
     return df, result, communities
 
+
 def format_algorithm_args(args):
     formatted_args = ""
-    args_dict = {}
     try:
         items = args.strip().split(',')
         for item in items:
             exprs = item.strip().split('=')
-            for i in range2(len(exprs)):
+            for i in range(len(exprs)):
                 exprs[i] = exprs[i].strip()
 
-            args_dict[exprs[0]] = exprs[1]
             formatted_args += exprs[0] + "=" + exprs[1] + ","
         if len(formatted_args) > 0:
-            formatted_args = formatted_args[0 : len(formatted_args) - 1]
+            formatted_args = formatted_args[0: len(formatted_args) - 1]
     except:
         pass
 
-    return formatted_args, args_dict
+    return formatted_args
+
 
 def discover(request):
     """
@@ -273,12 +295,12 @@ def discover(request):
     print('discover')
     log_filename = request.POST['filename']
     algorithm = request.POST['algorithm']
-    formatted_args, args_dict = format_algorithm_args(request.POST['args'])
+    formatted_args = format_algorithm_args(request.POST['args'])
     interval = int(request.POST['interval'])
     ordinal_number = int(request.POST['ordinal_number'])
-    df, last_result, communities = get_result_df(log_filename=log_filename, algorithm=algorithm, \
-                                                 formatted_args=formatted_args, args_dict=args_dict, \
-                                                 interval=interval, ordinal_number=ordinal_number)
+    df, last_result, communities = get_result_df(log_filename=log_filename, algorithm=algorithm,
+                                                 formatted_args=formatted_args, interval=interval,
+                                                 ordinal_number=ordinal_number)
     g = get_graph(df)
     context = dict(
         graph=g.render_embed(),
@@ -331,9 +353,10 @@ def detail(request, community_tag):
     print('detail')
     last_result = Result.objects.latest('result_time')
     df, last_result, communities = get_result_df(log_filename=last_result.log_filename,
-                                                 start_time=last_result.start_time,
-                                                 end_time=last_result.end_time,
-                                                 smallest_size=last_result.smallest_size)
+                                                 algorithm=last_result.algorithm,
+                                                 formatted_args=last_result.formatted_args,
+                                                 interval=last_result.interval,
+                                                 ordinal_number=last_result.ordinal_number)
     feature_groups = [
         ['port1', 'port2', 'proto'],
         ['pkts12_min', 'pkts12_mid', 'pkts12_max'],
@@ -359,6 +382,7 @@ def read_log(filename, interval, ordinal_number):
     sd = Stream_Data(filename)
     return sd.get_data_segment2(interval, ordinal_number)
 
+'''
 def read_log(filename, start_time, end_time):
     """
     读取指定时间区间的日志
@@ -376,6 +400,7 @@ def read_log(filename, start_time, end_time):
     end_time = time.mktime(time.strptime(end_time, "%Y-%m-%dT%H:%M"))
 
     return log_df[log_df['etime'] >= start_time][log_df['etime'] < end_time]
+'''
 
 
 def wash_log(log_df):
@@ -390,6 +415,7 @@ def wash_log(log_df):
     clean_df = log_df.drop_duplicates(['ip1', 'ip2', 'port1', 'port2', 'proto'], keep='last')
 
     return clean_df
+
 
 def construct_topology(clean_df):
     """
@@ -601,7 +627,7 @@ def extract_feature_df(same_label_df):
     return feature_df, verification_df
 
 
-def normalize(X, func=None):
+def normalize(X: object, func: object = None) -> object:
     print('normalize')
 
     if func == 'atan':
@@ -630,7 +656,6 @@ def encode_tag(community_result_df):
     """
 
     :param community_result_df:
-    :param smallest_size:
     :return:
     """
     # ip列
