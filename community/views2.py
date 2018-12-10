@@ -12,16 +12,24 @@ import numpy as np
 import django.utils.timezone as timezone
 from collections import Counter
 
+sys.path.append("/home/zhoumin/project/community_tracking/src/community_detect")
+
+from community_detect_our import Community_Detect_Our
+from stream_data import Stream_Data
+
 #PROJECT_DIR = os.path.dirname(__file__)
 PROJECT_DIR = "/home/cd/"
-DATA_SET_DIR = os.path.join(PROJECT_DIR, "static/community/dataset")
-RESULT_DIR = os.path.join(PROJECT_DIR, "static/community/result")
+#DATA_SET_DIR = os.path.join(PROJECT_DIR, "static/community/dataset")
+DATA_SET_DIR = os.path.join(PROJECT_DIR, "/home/zhoumin/project/community_tracking/labeled_log0202/")
+#RESULT_DIR = os.path.join(PROJECT_DIR, "static/community/result")
+RESULT_DIR = os.path.join(PROJECT_DIR, "/home/zhoumin/project/community_tracking/results/")
 if not os.path.exists(RESULT_DIR):
     os.makedirs(RESULT_DIR)
 
 # 至少有这么IP对才会做聚类操作
 LEAST_IP_PAIR_FOR_CLUSTERING = 3
 
+ALGORITHMS = ["lpa", "lpabs", "cdcbs"]
 
 def index(request):
     """
@@ -46,7 +54,7 @@ def index(request):
     context = dict(
         graph=g.render_embed(),
         files=os.listdir(DATA_SET_DIR),
-        algorithms=['lpa','sdsf', 'abc'],
+        algorithms=ALGORITHMS,
         last_result=last_result,
         communities=communities
     )
@@ -72,23 +80,88 @@ def get_graph(df):
             exist_nodes[source] = []
         if target not in exist_nodes:
             exist_nodes[target] = []
-        exist_nodes[source].append(int(df.loc[i, 'community_tag']))
-        exist_nodes[target].append(int(df.loc[i, 'community_tag']))
+        exist_nodes[source] = int(df.loc[i, 'community_tag1'])
+        exist_nodes[target] = int(df.loc[i, 'community_tag2'])
         links.append({'source': source, 'target': target})
     nodes = []
     categories = []
-    for node, cato_list in exist_nodes.items():
-        # 取众数
-        cat = Counter(cato_list).most_common(1)[0][0]
+
+    for node, cat in exist_nodes.items():
+    #     # 取众数
+    #     cat = Counter(cato_list).most_common(1)[0][0]
         nodes.append({'name': node, 'symbolSize': 10, 'value': cat})
-        categories.append(cat)
-    categories = LabelEncoder().fit_transform(categories)
-    for node, cat in zip(nodes, categories):
-        node['category'] = cat
+    #     categories.append(cat)
+    # categories = LabelEncoder().fit_transform(categories)
+    # for node, cat in zip(nodes, categories):
+    #     node['category'] = cat
     g = Graph(title="拓扑结构", subtitle='IP:{} Links:{}'.format(len(nodes), len(links)), width=1200, height=500)
-    g.add("", nodes, links, layout='circular', categories=list(categories))
+    g.add("", nodes, links, categories=list(categories))
     return g
 
+def get_ip_to_community(communities):
+    ip_to_community = {}
+    for tag, community in communities:
+        for ip in community:
+            ip_to_community[ip] = tag
+
+    return ip_to_community
+
+def convert_communities_result_to_df(data, communities):
+    data_df = pd.DataFrame(data, columns=['ip1', 'ip2', 'time', 'app'])
+    ip_to_community = get_ip_to_community(communities)
+
+    community_tag1_list = []
+    community_tag2_list = []
+
+    for edge in data:
+        ip1 = edge[0]
+        ip2 = edge[1]
+        community_tag1_list.append(ip_to_community[ip1])
+        community_tag2_list.append(ip_to_community[ip2])
+
+    df = pd.DataFrame({'ip1': data_df['ip1'], 'ip2': data_df['ip2'], \
+                       'community_tag1': community_tag1_list, \
+                       'community_tag2': community_tag2_list})
+
+    return df
+
+def detect_community(algorithm, args_dict, data):
+    cdo = Community_Detect_Our()
+    cdo.generate_graph(data)
+
+    alpha = args_dict.get("a", 1)
+    beta = args_dict.get("b", 1)
+    coeff = args_dict.get("c", 0.1)
+
+    if algorithm == "lpa":
+        communities = cdo.modified_lpa_syn()
+    elif algorithm == "lpabs":
+        communities = cdo.lpa_based_similarity(alpha=alpha, beta=beta, coeff=coeff)
+    elif algorithm == "cdcbs":
+        communities = cdo.cdcbs(alpha=alpha, beta=beta, coeff=coeff)
+    else:
+        return
+
+    return convert_communities_result_to_df(data, communities)
+
+def check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
+    if not os.path.exists(os.path.join(DATA_SET_DIR, log_filename)):
+        return False
+    if algorithm not in ALGORITHMS:
+        return False
+    if algorithm == "lpabs" or algorithm == "cdcbs":
+        if 'a' not in args_dict:
+            return False
+        if 'b' not in args_dict:
+            return False
+    if algorithm == "cdcbs":
+        if 'c' not in args_dict:
+            return False
+    if interval < 0:
+        return False
+    if ordinal_number < 0:
+        return False
+    return True
 
 def get_result_df(log_filename, algorithm, formatted_args, args_dict, interval, ordinal_number):
     """
@@ -103,19 +176,26 @@ def get_result_df(log_filename, algorithm, formatted_args, args_dict, interval, 
     print('get_result_df')
     result_filename = '{}_{}_{}.csv'.format(log_filename, algorithm, formatted_args, \
                                             interval, ordinal_number).replace(':', '')
+
+    df = pd.DataFrame(columns=['ip1', 'ip2', 'community_tag'])
+
+    if check_params(log_filename, algorithm, args_dict, interval, ordinal_number) == False:
+        return df, Result(), set()
     #todo
     if os.path.exists(os.path.join(RESULT_DIR, result_filename)):
         df = pd.read_csv(os.path.join(RESULT_DIR, result_filename))
         # 移除小社团
-        df = remove_small_community(df, smallest_size=smallest_size)
+        #df = remove_small_community(df, smallest_size=smallest_size)
 
         result = Result.objects.get(result_filename__exact=result_filename)
         result.result_time = timezone.now()
-        result.smallest_size = smallest_size
+        #result.smallest_size = smallest_size
         result.save()
     else:
         # 读入
-        df = read_log(log_filename, start_time, end_time)
+        data = read_log(log_filename, interval, ordinal_number)
+        df = detect_community(algorithm, args_dict, data)
+        '''
         df.to_csv(os.path.join(RESULT_DIR, '_df1.csv'), index=False)
         # 清洗
         df = wash_log(df)
@@ -134,15 +214,17 @@ def get_result_df(log_filename, algorithm, formatted_args, args_dict, interval, 
         df.to_csv(os.path.join(RESULT_DIR, '_df6.csv'), index=False)
         # 标签重编码
         df = encode_tag(df)
+        '''
         df.to_csv(os.path.join(RESULT_DIR, result_filename), index=False)
         # 移除小社团
-        df = remove_small_community(df, smallest_size=smallest_size)
+        #df = remove_small_community(df, smallest_size=smallest_size)
 
         result = Result()
         result.result_time = timezone.now()
-        result.smallest_size = smallest_size
-        result.end_time = end_time
-        result.start_time = start_time
+        #result.smallest_size = smallest_size
+        result.interval = interval
+        result.formatted_args = formatted_args
+        result.ordinal_number = ordinal_number
         result.log_filename = log_filename
         result.community_counts = len(set(df['community_tag']))
         result.ip_counts = len(set(df['ip1']) | set(df['ip2']))
@@ -169,7 +251,7 @@ def format_algorithm_args(args):
         items = args.strip().split(',')
         for item in items:
             exprs = item.strip().split('=')
-            for i in range(len(exprs)):
+            for i in range2(len(exprs)):
                 exprs[i] = exprs[i].strip()
 
             args_dict[exprs[0]] = exprs[1]
@@ -273,6 +355,10 @@ def detail(request, community_tag):
     return render(request, 'community/detail2.html', context)
 
 
+def read_log(filename, interval, ordinal_number):
+    sd = Stream_Data(filename)
+    return sd.get_data_segment2(interval, ordinal_number)
+
 def read_log(filename, start_time, end_time):
     """
     读取指定时间区间的日志
@@ -304,7 +390,6 @@ def wash_log(log_df):
     clean_df = log_df.drop_duplicates(['ip1', 'ip2', 'port1', 'port2', 'proto'], keep='last')
 
     return clean_df
-
 
 def construct_topology(clean_df):
     """
