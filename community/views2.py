@@ -131,7 +131,7 @@ def convert_communities_result_to_df(data, communities):
 
 def detect_community(algorithm, args_dict, data):
     cdo = Community_Detect_Our()
-    cdo.generate_graph(data)
+    cdo.generate_graph_opt(data)
 
     alpha = args_dict.get("a", 1)
     beta = args_dict.get("b", 1)
