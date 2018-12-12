@@ -151,6 +151,7 @@ def detect_community(algorithm, args_dict, data):
 
 def check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
     if not os.path.exists(log_filename):
+        print("log_file: %s", log_filename)
         print("The log file doesn't exist")
         return False
     if algorithm not in ALGORITHMS:
