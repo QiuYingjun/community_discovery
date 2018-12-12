@@ -16,7 +16,6 @@ from collections import Counter
 sys.path.append("/home/zhoumin/project/community_tracking/src/community_detect")
 sys.path.append("/home/zhoumin/project/community_tracking/src/data_handle")
 from community_detect_our import Community_Detect_Our
-from stream_data import Stream_Data
 
 # PROJECT_DIR = os.path.dirname(__file__)
 PROJECT_DIR = "/home/cd/"
