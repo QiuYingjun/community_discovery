@@ -150,7 +150,7 @@ def detect_community(algorithm, args_dict, data):
 
 
 def check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
-    if not os.path.exists(os.path.join(DATA_SET_DIR, log_filename)):
+    if not os.path.exists(log_filename):
         return False
     if algorithm not in ALGORITHMS:
         return False
@@ -201,6 +201,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
     df = pd.DataFrame(columns=['ip1', 'ip2', 'community_tag'])
 
     args_dict = get_args_from_str(formatted_args)
+    log_filename = os.path.join(DATA_SET_DIR, log_filename)
     if not check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
         return df, Result(), set()
     # todo
