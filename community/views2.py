@@ -151,20 +151,27 @@ def detect_community(algorithm, args_dict, data):
 
 def check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
     if not os.path.exists(log_filename):
+        print("The log file doesn't exist")
         return False
     if algorithm not in ALGORITHMS:
+        print("The algorithm doesn't exist")
         return False
     if algorithm == "lpabs" or algorithm == "cdcbs":
         if 'a' not in args_dict:
+            print("Lack the param alpha for algorithm lpabs or cdcbs")
             return False
         if 'b' not in args_dict:
+            print("Lack the param beta for algorithm lpabs or cdcbs")
             return False
     if algorithm == "cdcbs":
         if 'c' not in args_dict:
+            print("Lack the param coeff for algorithm cdcbs")
             return False
-    if interval < 0:
+    if interval <= 0:
+        print("The interval should be larger than zero")
         return False
-    if ordinal_number < 0:
+    if ordinal_number <= 0:
+        print("The ordinal_number should be larger than zero")
         return False
     return True
 
@@ -203,6 +210,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
     args_dict = get_args_from_str(formatted_args)
     log_filename = os.path.join(DATA_SET_DIR, log_filename)
     if not check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
+        print("invalid params")
         return df, Result(), set()
     # todo
     if os.path.exists(os.path.join(RESULT_DIR, result_filename)):
