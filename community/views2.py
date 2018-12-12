@@ -306,6 +306,7 @@ def discover(request):
     context = dict(
         graph=g.render_embed(),
         files=os.listdir(DATA_SET_DIR),
+        algorithm=ALGORITHMS,
         communities=communities,
         last_result=last_result,
 
