@@ -14,9 +14,9 @@ import sys
 from collections import Counter
 
 sys.path.append("/home/zhoumin/project/community_tracking/src/community_detect")
-
+sys.path.append("/home/zhoumin/project/community_tracking/src/data_handle")
 from community_detect_our import Community_Detect_Our
-from stream_data_0502 import Stream_Data
+from stream_data import Stream_Data
 
 # PROJECT_DIR = os.path.dirname(__file__)
 PROJECT_DIR = "/home/cd/"
@@ -391,7 +391,7 @@ def detail(request, community_tag):
 
 def read_log(filename, interval, ordinal_number):
     sd = Stream_Data(filename)
-    return sd.get_data_segment(interval, ordinal_number)
+    return sd.get_data_segment2(interval, ordinal_number)
 
 '''
 def read_log(filename, start_time, end_time):
