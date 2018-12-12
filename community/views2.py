@@ -391,7 +391,7 @@ def detail(request, community_tag):
 
 def read_log(filename, interval, ordinal_number):
     sd = Stream_Data(filename)
-    return sd.get_data_segment2(interval, ordinal_number)
+    return sd.get_data_segment(interval, ordinal_number)
 
 '''
 def read_log(filename, start_time, end_time):
