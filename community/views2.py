@@ -129,8 +129,9 @@ def convert_communities_result_to_df(data, communities):
     return df
 
 
-def detect_community(algorithm, args_dict, data):
-    cdo = Community_Detect_Our()
+def detect_community(logfile, interval, ordinal_number, algorithm, args_dict):
+    cdo = Community_Detect_Our(logfile)
+    data = cdo.stream_data.get_data_segment2(interval, ordinal_number)
     cdo.generate_graph_opt(data)
 
     alpha = args_dict.get("a", 1)
@@ -225,8 +226,9 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
         result.save()
     else:
         # 读入
-        data = read_log(log_filename, interval, ordinal_number)
-        df = detect_community(algorithm, args_dict, data)
+        #data = read_log(log_filename, interval, ordinal_number)
+        #df = detect_community(algorithm, args_dict, data)
+        df = detect_community(log_filename, interval, ordinal_number, algorithm, args_dict)
         '''
         df.to_csv(os.path.join(RESULT_DIR, '_df1.csv'), index=False)
         # 清洗
