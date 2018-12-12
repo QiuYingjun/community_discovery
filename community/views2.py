@@ -132,6 +132,7 @@ def detect_community(logfile, interval, ordinal_number, algorithm, args_dict):
     cdo = Community_Detect_Our(logfile)
     data = cdo.stream_data.get_data_segment2(interval, ordinal_number)
     cdo.generate_graph_opt(data)
+    cdo.keep_largest_subgraph()
 
     alpha = args_dict.get("a", 1)
     beta = args_dict.get("b", 1)
