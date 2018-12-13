@@ -102,7 +102,7 @@ def get_graph(df):
 
 def get_ip_to_community(communities):
     ip_to_community = {}
-    for tag, community in communities:
+    for tag, community in communities.items():
         for ip in community:
             ip_to_community[ip] = tag
 
