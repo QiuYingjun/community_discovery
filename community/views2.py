@@ -116,18 +116,22 @@ def convert_communities_result_to_df(data, communities):
     community_tag1_list = []
     community_tag2_list = []
 
+    invalid_tag = -100
+
     for edge in data:
         ip1 = edge[0]
         ip2 = edge[1]
         if ip1 in ip_to_community:
             community_tag1_list.append(ip_to_community[ip1])
         else:
-            print("This ip has been deleted: ", ip1)
+            print("This ip1 has been deleted: ", ip1)
+            community_tag1_list.append(invalid_tag)
 
         if ip2 in ip_to_community:
             community_tag2_list.append(ip_to_community[ip2])
         else:
-            print("This ip has been deleted: ", ip2)
+            print("This ip2 has been deleted: ", ip2)
+            community_tag2_list.append(invalid_tag)
 
     df = pd.DataFrame({'ip1': data_df['ip1'], 'ip2': data_df['ip2'], 'community_tag1': community_tag1_list,
                        'community_tag2': community_tag2_list})
