@@ -139,7 +139,7 @@ def detect_community(logfile, interval, ordinal_number, algorithm, args_dict):
     coeff = args_dict.get("c", 0.1)
 
     if algorithm == "lpa":
-        communities = cdo.modified_lpa_syn()
+        communities = cdo.modified_lpa_asyn()
     elif algorithm == "lpabs":
         communities = cdo.lpa_based_similarity(alpha=alpha, beta=beta, coeff=coeff)
     elif algorithm == "cdcbs":
