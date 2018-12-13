@@ -216,7 +216,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
     :return:
     """
     print('get_result_df')
-    result_filename = f'{log_filename}_{algorithm}_{formatted_args}.csv'.replace(':', '')
+    result_filename = f'{log_filename}_{algorithm}_{formatted_args}_{interval}_{ordinal_number}.csv'.replace(':', '')
 
     df = pd.DataFrame(columns=['ip1', 'ip2', 'community_tag'])
 
