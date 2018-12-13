@@ -158,7 +158,7 @@ def detect_community(logfile, interval, ordinal_number, algorithm, args_dict):
     else:
         return
 
-    return convert_communities_result_to_df(data, communities)
+    return convert_communities_result_to_df(data, communities), communities
 
 
 def check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
@@ -239,7 +239,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
         # 读入
         #data = read_log(log_filename, interval, ordinal_number)
         #df = detect_community(algorithm, args_dict, data)
-        df = detect_community(log_filename, interval, ordinal_number, algorithm, args_dict)
+        df, comms = detect_community(log_filename, interval, ordinal_number, algorithm, args_dict)
         '''
         df.to_csv(os.path.join(RESULT_DIR, '_df1.csv'), index=False)
         # 清洗
@@ -271,12 +271,21 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
         result.formatted_args = formatted_args
         result.ordinal_number = ordinal_number
         result.log_filename = log_filename
-        result.community_counts = len(set(df['community_tag']))
+        result.community_counts = len(set(df['community_tag1']) | set(df['community_tag2']))
         result.ip_counts = len(set(df['ip1']) | set(df['ip2']))
         result.result_filename = result_filename
         result.save()
 
     communities = set()
+    for community_tag in comms:
+        community = Community(community_tag=community_tag)
+        community.result = result
+        community.ip_counts = len(comms[community_tag])
+        community.link_counts = 0
+        community.leader_ip = comms[community_tag][0]
+        community.save()
+        communities.add(community)
+    '''
     for community_tag, community_table in df.groupby('community_tag'):
         community = Community(community_tag=community_tag)
         community.result = result
@@ -285,6 +294,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
         community.leader_ip = community_table['ip2'].mode()[0]
         # community.save()
         communities.add(community)
+    '''
     communities = sorted(communities, key=lambda c: c.ip_counts, reverse=True)
 
     return df, result, communities
