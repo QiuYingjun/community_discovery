@@ -116,7 +116,7 @@ def convert_communities_result_to_df(data, communities):
     community_tag1_list = []
     community_tag2_list = []
 
-    invalid_tag = -100
+    invalid_tag = -1
 
     for edge in data:
         ip1 = edge[0]
