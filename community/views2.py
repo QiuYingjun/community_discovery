@@ -191,6 +191,7 @@ def check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
 
 
 def get_args_from_str(formatted_args):
+    print("formatted_args: ", formatted_args)
     args_dict = {}
     if formatted_args == "":
         return args_dict
