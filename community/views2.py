@@ -169,6 +169,7 @@ def check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
     if algorithm not in ALGORITHMS:
         print("The algorithm doesn't exist")
         return False
+    print("args_dict: ", args_dict)
     if algorithm == "lpabs" or algorithm == "cdcbs":
         if 'a' not in args_dict:
             print("Lack the param alpha for algorithm lpabs or cdcbs")
