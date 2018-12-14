@@ -199,7 +199,7 @@ def get_args_from_str(formatted_args):
         exprs = formatted_args.split(',')
         for expr in exprs:
             items = expr.split('=')
-            args_dict[items[0]] = args_dict[items[1]]
+            args_dict[items[0]] = float(items[1])
     except:
         return {}
 
