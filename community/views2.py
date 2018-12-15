@@ -31,6 +31,14 @@ LEAST_IP_PAIR_FOR_CLUSTERING = 3
 
 ALGORITHMS = ["lpa", "lpabs", "cdcbs"]
 
+def get_log_file_list():
+    files=os.listdir(DATA_SET_DIR),
+    ret = []
+    for f in files:
+        if f.endswith("csv"):
+            ret.append(f)
+
+    return ret
 
 def index(request):
     """
@@ -54,7 +62,7 @@ def index(request):
 
     context = dict(
         graph=g.render_embed(),
-        files=os.listdir(DATA_SET_DIR),
+        files=get_log_file_list(),
         algorithms=ALGORITHMS,
         last_result=last_result,
         communities=communities
@@ -339,7 +347,8 @@ def discover(request):
     g = get_graph(df)
     context = dict(
         graph=g.render_embed(),
-        files=os.listdir(DATA_SET_DIR),
+        #files=os.listdir(DATA_SET_DIR),
+        files=get_log_file_list(),
         algorithm=ALGORITHMS,
         communities=communities,
         last_result=last_result,
