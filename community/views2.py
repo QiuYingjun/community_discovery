@@ -235,16 +235,20 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
         print("invalid params")
         return df, Result(), set()
     # todo
+    ok = False
     if os.path.exists(os.path.join(RESULT_DIR, result_filename)):
         df = pd.read_csv(os.path.join(RESULT_DIR, result_filename))
         # 移除小社团
         # df = remove_small_community(df, smallest_size=smallest_size)
-
-        result = Result.objects.get(result_filename=result_filename)
-        result.result_time = timezone.now()
-        # result.smallest_size = smallest_size
-        result.save()
-    else:
+        try:
+            result = Result.objects.get(result_filename=result_filename)
+            result.result_time = timezone.now()
+            # result.smallest_size = smallest_size
+            result.save()
+            ok = True
+        except Result.DoesNotExist:
+            print("Error! record not found.")
+    if not ok:
         # 读入
         #data = read_log(log_filename, interval, ordinal_number)
         #df = detect_community(algorithm, args_dict, data)
