@@ -102,7 +102,7 @@ def get_graph(df):
     categories = LabelEncoder().fit_transform(categories)
     for node, cat in zip(nodes, categories):
          node['category'] = cat
-    g = Graph(title="拓扑结构", subtitle='IP:{} Links:{}'.format(len(nodes), len(links)), width=1500, height=1000)
+    g = Graph(title="拓扑结构", subtitle='IP:{} Links:{}'.format(len(nodes), len(links)), width=1920, height=1024)
     g.add("", nodes, links, categories=list(categories))
     return g
 
@@ -145,12 +145,28 @@ def convert_communities_result_to_df(data, communities):
 
     return df
 
+def remove_outlier_in_data(data, removed_nodes):
+    ip1s = list(data.ip1)
+    for node in removed_nodes:
+        if node in ip1s:
+            ip1s.remove(node)
+    data = data[data.ip1.isin(ip1s)]
+
+    ip2s = list(data.ip2)
+    for node in removed_nodes:
+        if node in ip2s:
+            ip2s.remove(node)
+    data = data[data.ip2.isin(ip2s)]
+
+    return data
 
 def detect_community(logfile, interval, ordinal_number, algorithm, args_dict):
     cdo = Community_Detect_Our(logfile)
     data = cdo.stream_data.get_data_segment2(interval, ordinal_number)
     cdo.generate_graph_opt(data)
-    cdo.keep_largest_subgraph()
+    removed_nodes = cdo.keep_largest_subgraph()
+
+    remove_outlier_in_data(data, removed_nodes)
 
     alpha = args_dict.get("a", 1)
     beta = args_dict.get("b", 1)
