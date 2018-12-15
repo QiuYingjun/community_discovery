@@ -240,7 +240,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
         # 移除小社团
         # df = remove_small_community(df, smallest_size=smallest_size)
 
-        result = Result.objects.get(result_filename__exact=result_filename)
+        result = Result.objects.get(result_filename=result_filename)
         result.result_time = timezone.now()
         # result.smallest_size = smallest_size
         result.save()
