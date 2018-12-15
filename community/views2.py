@@ -241,6 +241,21 @@ def get_args_from_str(formatted_args):
 
     return args_dict
 
+def get_comms_from_df(df):
+    comms = {}
+    for i in df.index:
+        ip1 = df.loc[i, 'ip1']
+        ip2 = df.loc[i, 'ip2']
+        tag1 = df.loc[i, 'community_tag1']
+        tag2 = df.loc[i, 'community_tag2']
+        if tag1 not in comms:
+            comms[tag1] = []
+        comms[tag1].append(ip1)
+        if tag2 not in comms:
+            comms[tag2] = []
+        comms[tag2].append(ip2)
+
+    return comms
 
 def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_number):
     """
@@ -267,6 +282,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
     ok = False
     if os.path.exists(os.path.join(RESULT_DIR, result_filename)):
         df = pd.read_csv(os.path.join(RESULT_DIR, result_filename))
+        comms = get_comms_from_df(df)
         # 移除小社团
         # df = remove_small_community(df, smallest_size=smallest_size)
         try:
