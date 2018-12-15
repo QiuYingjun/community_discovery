@@ -145,20 +145,33 @@ def convert_communities_result_to_df(data, communities):
 
     return df
 
-def remove_outlier_in_data(data, removed_nodes):
-    ip1s = list(data.ip1)
+def remove_outlier_in_df(df, removed_nodes):
+    ip1s = list(df.ip1)
     for node in removed_nodes:
         if node in ip1s:
             ip1s.remove(node)
-    data = data[data.ip1.isin(ip1s)]
+    df = df[df.ip1.isin(ip1s)]
 
-    ip2s = list(data.ip2)
+    ip2s = list(df.ip2)
     for node in removed_nodes:
         if node in ip2s:
             ip2s.remove(node)
-    data = data[data.ip2.isin(ip2s)]
+    df = df[df.ip2.isin(ip2s)]
 
-    return data
+    return df
+
+def remove_outlier_in_edge_list(edge_list, removed_nodes):
+    for node in removed_nodes:
+        index = -1
+        for i in range(len(edge_list)):
+            edge = edge_list[i]
+            if edge[0] == node or edge[1] == node:
+                index = i
+                break
+        if index != -1:
+            edge_list.pop(index)
+
+    return edge_list
 
 def detect_community(logfile, interval, ordinal_number, algorithm, args_dict):
     cdo = Community_Detect_Our(logfile)
@@ -166,7 +179,7 @@ def detect_community(logfile, interval, ordinal_number, algorithm, args_dict):
     cdo.generate_graph_opt(data)
     removed_nodes = cdo.keep_largest_subgraph()
 
-    remove_outlier_in_data(data, removed_nodes)
+    remove_outlier_in_edge_list(data, removed_nodes)
 
     alpha = args_dict.get("a", 1)
     beta = args_dict.get("b", 1)
