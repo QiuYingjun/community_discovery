@@ -102,7 +102,7 @@ def get_graph(df):
     categories = LabelEncoder().fit_transform(categories)
     for node, cat in zip(nodes, categories):
          node['category'] = cat
-    g = Graph(title="拓扑结构", subtitle='IP:{} Links:{}'.format(len(nodes), len(links)), width=1200, height=500)
+    g = Graph(title="拓扑结构", subtitle='IP:{} Links:{}'.format(len(nodes), len(links)), width=1500, height=1000)
     g.add("", nodes, links, categories=list(categories))
     return g
 
