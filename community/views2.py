@@ -33,7 +33,7 @@ ALGORITHMS = ["lpa", "lpabs", "cdcbs"]
 
 def get_log_file_list():
     ret = []
-    for f in os.list(DATA_SET_DIR):
+    for f in os.listdir(DATA_SET_DIR):
         if f.endswith("csv"):
             ret.append(f)
 
