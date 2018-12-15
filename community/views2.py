@@ -123,7 +123,7 @@ def convert_communities_result_to_df(data, communities):
     community_tag1_list = []
     community_tag2_list = []
 
-    invalid_tag = -1
+    invalid_tag = 0
 
     for edge in data:
         ip1 = edge[0]
@@ -179,7 +179,7 @@ def detect_community(logfile, interval, ordinal_number, algorithm, args_dict):
     cdo.generate_graph_opt(data)
     removed_nodes = cdo.keep_largest_subgraph()
 
-    remove_outlier_in_edge_list(data, removed_nodes)
+    data = remove_outlier_in_edge_list(data, removed_nodes)
 
     alpha = args_dict.get("a", 1)
     beta = args_dict.get("b", 1)
