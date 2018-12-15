@@ -280,7 +280,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
         return df, Result(), set()
     # todo
     ok = False
-    if os.path.exists(os.path.join(RESULT_DIR, result_filename)):
+    if ok and os.path.exists(os.path.join(RESULT_DIR, result_filename)):
         df = pd.read_csv(os.path.join(RESULT_DIR, result_filename))
         comms = get_comms_from_df(df)
         # 移除小社团
