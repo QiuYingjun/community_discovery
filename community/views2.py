@@ -91,10 +91,10 @@ def get_graph(df):
         #     # 取众数
         #     cat = Counter(cato_list).most_common(1)[0][0]
         nodes.append({'name': node, 'symbolSize': 10, 'value': cat})
-    # categories.append(cat)
-    # categories = LabelEncoder().fit_transform(categories)
-    # for node, cat in zip(nodes, categories):
-    #     node['category'] = cat
+        categories.append(cat)
+    categories = LabelEncoder().fit_transform(categories)
+    for node, cat in zip(nodes, categories):
+         node['category'] = cat
     g = Graph(title="拓扑结构", subtitle='IP:{} Links:{}'.format(len(nodes), len(links)), width=1200, height=500)
     g.add("", nodes, links, categories=list(categories))
     return g
