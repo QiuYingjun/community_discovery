@@ -3,7 +3,8 @@ import django.utils.timezone as timezone
 
 
 class Result(models.Model):
-    log_filename = models.CharField(max_length=250, default='con050217.csv')
+    #log_filename = models.CharField(max_length=250, default='con050217.csv')
+    log_filename = models.CharField(max_length=250)
     start_time = models.CharField(max_length=100, default='2018-05-02T17:00')
     end_time = models.CharField(max_length=100, default='2018-05-02T17:01')
     smallest_size = models.IntegerField(default=2)
