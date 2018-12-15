@@ -32,9 +32,8 @@ LEAST_IP_PAIR_FOR_CLUSTERING = 3
 ALGORITHMS = ["lpa", "lpabs", "cdcbs"]
 
 def get_log_file_list():
-    files=os.listdir(DATA_SET_DIR),
     ret = []
-    for f in files:
+    for f in os.list(DATA_SET_DIR):
         if f.endswith("csv"):
             ret.append(f)
 
