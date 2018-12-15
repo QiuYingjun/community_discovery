@@ -274,8 +274,8 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
     df = pd.DataFrame(columns=['ip1', 'ip2', 'community_tag'])
 
     args_dict = get_args_from_str(formatted_args)
-    log_filename = os.path.join(DATA_SET_DIR, log_filename)
-    if not check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
+    log_filename_internal = os.path.join(DATA_SET_DIR, log_filename)
+    if not check_params(log_filename_internal, algorithm, args_dict, interval, ordinal_number):
         print("invalid params")
         return df, Result(), set()
     # todo
@@ -297,7 +297,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
         # 读入
         #data = read_log(log_filename, interval, ordinal_number)
         #df = detect_community(algorithm, args_dict, data)
-        df, comms = detect_community(log_filename, interval, ordinal_number, algorithm, args_dict)
+        df, comms = detect_community(log_filename_internal, interval, ordinal_number, algorithm, args_dict)
         '''
         df.to_csv(os.path.join(RESULT_DIR, '_df1.csv'), index=False)
         # 清洗
@@ -397,7 +397,7 @@ def discover(request):
         graph=g.render_embed(),
         #files=os.listdir(DATA_SET_DIR),
         files=get_log_file_list(),
-        algorithm=ALGORITHMS,
+        algorithms=ALGORITHMS,
         communities=communities,
         last_result=last_result,
 
