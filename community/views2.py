@@ -341,6 +341,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
         community.ip_counts = len(comms[community_tag])
         community.link_counts = 0
         community.leader_ip = comms[community_tag][0]
+        community.apps = comms_to_app[community_tag]
         community.save()
         communities.add(community)
     '''
@@ -355,7 +356,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
     '''
     communities = sorted(communities, key=lambda c: c.ip_counts, reverse=True)
 
-    return df, result, communities, comms_to_app
+    return df, result, communities
 
 
 def format_algorithm_args(args):
@@ -389,7 +390,7 @@ def discover(request):
     formatted_args = format_algorithm_args(request.POST['args'])
     interval = int(request.POST['interval'])
     ordinal_number = int(request.POST['ordinal_number'])
-    df, last_result, communities, comms_to_app = get_result_df(log_filename=log_filename, algorithm=algorithm,
+    df, last_result, communities = get_result_df(log_filename=log_filename, algorithm=algorithm,
                                                  formatted_args=formatted_args, interval=interval,
                                                  ordinal_number=ordinal_number)
     g = get_graph(df)
@@ -400,7 +401,6 @@ def discover(request):
         algorithms=ALGORITHMS,
         communities=communities,
         last_result=last_result,
-        comms_to_app=comms_to_app
 
     )
     return render(request, 'community/discover2.html', context)
@@ -446,7 +446,7 @@ def detail(request, community_tag):
     """
     print('detail')
     last_result = Result.objects.latest('result_time')
-    df, last_result, communities, comms_to_app = get_result_df(log_filename=last_result.log_filename,
+    df, last_result, communities = get_result_df(log_filename=last_result.log_filename,
                                                  algorithm=last_result.algorithm,
                                                  formatted_args=last_result.formatted_args,
                                                  interval=last_result.interval,
