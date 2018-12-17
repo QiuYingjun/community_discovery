@@ -117,7 +117,7 @@ def get_ip_to_community(communities):
 
 
 def convert_communities_result_to_df(data, communities):
-    data_df = pd.DataFrame(data, columns=['ip1', 'ip2', 'time', 'app'])
+    data_df = pd.DataFrame(data, columns=['ip1', 'ip2', 'time', 'app', 'sport', 'dport'])
     ip_to_community = get_ip_to_community(communities)
 
     community_tag1_list = []
@@ -141,7 +141,7 @@ def convert_communities_result_to_df(data, communities):
             community_tag2_list.append(invalid_tag)
 
     df = pd.DataFrame({'ip1': data_df['ip1'], 'ip2': data_df['ip2'], 'community_tag1': community_tag1_list,
-                       'community_tag2': community_tag2_list})
+                       'community_tag2': community_tag2_list, 'sport': data_df['sport'], 'dport': data_df['dport']})
 
     return df
 
