@@ -29,7 +29,7 @@ class Community(models.Model):
     ip_counts = models.IntegerField(default=0)
     link_counts = models.IntegerField(default=0)
     purity = models.FloatField(default=0)
-    apps = models.CharField(max_length=512)
+    apps = models.CharField(max_length=512, default='')
 
     def __str__(self):
         return '{},{},{},{}'.format(self.community_tag, self.leader_ip, self.ip_counts, self.link_counts)
