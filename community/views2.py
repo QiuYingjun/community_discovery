@@ -70,7 +70,7 @@ def index(request):
     return render(request, 'community/discover2.html', context)
 
 
-def get_graph(df, comms_to_app):
+def get_graph(df):
     """
     根据发现结果df生成关系图
 
@@ -392,7 +392,7 @@ def discover(request):
     df, last_result, communities, comms_to_app = get_result_df(log_filename=log_filename, algorithm=algorithm,
                                                  formatted_args=formatted_args, interval=interval,
                                                  ordinal_number=ordinal_number)
-    g = get_graph(df, comms_to_app)
+    g = get_graph(df)
     context = dict(
         graph=g.render_embed(),
         #files=os.listdir(DATA_SET_DIR),
