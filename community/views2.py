@@ -70,7 +70,7 @@ def index(request):
     return render(request, 'community/discover2.html', context)
 
 
-def get_graph(df):
+def get_graph(df, comms_to_app):
     """
     根据发现结果df生成关系图
 
@@ -102,7 +102,7 @@ def get_graph(df):
     categories = LabelEncoder().fit_transform(categories)
     for node, cat in zip(nodes, categories):
          node['category'] = cat
-    g = Graph(title="拓扑结构", subtitle='IP:{} Links:{}'.format(len(nodes), len(links)), width=1920, height=1024)
+    g = Graph(title="拓扑结构", subtitle='IP:{} Links:{}'.format(len(nodes), len(links)), width=1600, height=1024)
     g.add("", nodes, links, categories=list(categories))
     return g
 
@@ -186,15 +186,15 @@ def detect_community(logfile, interval, ordinal_number, algorithm, args_dict):
     coeff = args_dict.get("c", 0.1)
 
     if algorithm == "lpa":
-        communities = cdo.modified_lpa_asyn()
+        communities, comms_to_app = cdo.modified_lpa_asyn()
     elif algorithm == "lpabs":
-        communities = cdo.lpa_based_similarity(alpha=alpha, beta=beta, coeff=coeff)
+        communities, comms_to_app = cdo.lpa_based_similarity(alpha=alpha, beta=beta, coeff=coeff)
     elif algorithm == "cdcbs":
-        communities = cdo.cdcbs(alpha=alpha, beta=beta, coeff=coeff)
+        communities, comms_to_app = cdo.cdcbs(alpha=alpha, beta=beta, coeff=coeff)
     else:
         return
 
-    return convert_communities_result_to_df(data, communities), communities
+    return convert_communities_result_to_df(data, communities), communities, comms_to_app
 
 
 def check_params(log_filename, algorithm, args_dict, interval, ordinal_number):
@@ -297,7 +297,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
         # 读入
         #data = read_log(log_filename, interval, ordinal_number)
         #df = detect_community(algorithm, args_dict, data)
-        df, comms = detect_community(log_filename_internal, interval, ordinal_number, algorithm, args_dict)
+        df, comms, comms_to_app = detect_community(log_filename_internal, interval, ordinal_number, algorithm, args_dict)
         '''
         df.to_csv(os.path.join(RESULT_DIR, '_df1.csv'), index=False)
         # 清洗
@@ -355,7 +355,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
     '''
     communities = sorted(communities, key=lambda c: c.ip_counts, reverse=True)
 
-    return df, result, communities
+    return df, result, communities, comms_to_app
 
 
 def format_algorithm_args(args):
@@ -389,10 +389,10 @@ def discover(request):
     formatted_args = format_algorithm_args(request.POST['args'])
     interval = int(request.POST['interval'])
     ordinal_number = int(request.POST['ordinal_number'])
-    df, last_result, communities = get_result_df(log_filename=log_filename, algorithm=algorithm,
+    df, last_result, communities, comms_to_app = get_result_df(log_filename=log_filename, algorithm=algorithm,
                                                  formatted_args=formatted_args, interval=interval,
                                                  ordinal_number=ordinal_number)
-    g = get_graph(df)
+    g = get_graph(df, comms_to_app)
     context = dict(
         graph=g.render_embed(),
         #files=os.listdir(DATA_SET_DIR),
@@ -400,6 +400,7 @@ def discover(request):
         algorithms=ALGORITHMS,
         communities=communities,
         last_result=last_result,
+        comms_to_app=comms_to_app
 
     )
     return render(request, 'community/discover2.html', context)
@@ -445,7 +446,7 @@ def detail(request, community_tag):
     """
     print('detail')
     last_result = Result.objects.latest('result_time')
-    df, last_result, communities = get_result_df(log_filename=last_result.log_filename,
+    df, last_result, communities, comms_to_app = get_result_df(log_filename=last_result.log_filename,
                                                  algorithm=last_result.algorithm,
                                                  formatted_args=last_result.formatted_args,
                                                  interval=last_result.interval,
