@@ -115,6 +115,15 @@ def get_ip_to_community(communities):
 
     return ip_to_community
 
+def get_link_count_in_community(community, df):
+    edges = {}
+    for i in df.index:
+        ip1 = df.loc[i, 'ip1']
+        ip2 = df.loc[i, 'ip2']
+        if ip1 in community and ip2 in community:
+            edges['_'.join([ip1, ip2])] = 1
+
+    return len(edges)
 
 def convert_communities_result_to_df(data, communities):
     data_df = pd.DataFrame(data, columns=['ip1', 'ip2', 'time', 'app', 'sport', 'dport'])
@@ -339,7 +348,7 @@ def get_result_df(log_filename, algorithm, formatted_args, interval, ordinal_num
         community = Community(community_tag=community_tag)
         community.result = result
         community.ip_counts = len(comms[community_tag])
-        community.link_counts = 0
+        community.link_counts = get_link_count_in_community(comms[community_tag], df)
         community.leader_ip = comms[community_tag][0]
         community.apps = comms_to_app[community_tag]
         community.save()
