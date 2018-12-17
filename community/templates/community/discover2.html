@@ -27,10 +27,10 @@
         <input name="args" type="text" value="{{last_result.args}}"/>
         &nbsp&nbsp
         <label>时间间隔：</label>
-        <input name="interval" type="text" value="{{last_result.interval}}"/>
+        <input name="interval" pattern="[0-9]+" type="text" value="{{last_result.interval}}"/>
         &nbsp&nbsp
         <label>序数：</label>
-        <input name="ordinal_number" type="text" value="{{last_result.ordinal_number}}"/>
+        <input name="ordinal_number" pattern="[0-9]+" type="text" value="{{last_result.ordinal_number}}"/>
         <!--
         <label>起始时间：</label>
         <input name="start_time" type="datetime-local" value="{{last_result.start_time}}"/>
@@ -54,6 +54,7 @@
         <th class="col-md-3 text-center">领袖IP</th>
         <th class="col-md-3 text-center">总IP数</th>
         <th class="col-md-3 text-center">总边数</th>
+        <th class="col-md-3 text-center">应用类型</th>
       </tr>
     </thead>
     {% for c in communities %}
@@ -62,6 +63,7 @@
         <td class="col-md-3">{{c.leader_ip}}</td>
         <td class="col-md-3">{{c.ip_counts}}</td>
         <td class="col-md-3">{{c.link_counts}}</td>
+        <td class="col-md-3">{{comms_to_app[c.community_tag]}}</td>
       </tr>
     {% endfor %}
   </table>
