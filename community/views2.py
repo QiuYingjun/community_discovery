@@ -121,9 +121,12 @@ def get_link_count_in_community(community, df):
         ip1 = df.loc[i, 'ip1']
         ip2 = df.loc[i, 'ip2']
         if ip1 in community and ip2 in community:
-            edges['_'.join([ip1, ip2])] = 1
+            try:
+                edges['_'.join([ip1, ip2])] += 1
+            except:
+                edges['_'.join([ip1, ip2])] = 1
 
-    return len(edges)
+    return sum(edges.values())
 
 def convert_communities_result_to_df(data, communities):
     data_df = pd.DataFrame(data, columns=['ip1', 'ip2', 'time', 'app', 'sport', 'dport'])
