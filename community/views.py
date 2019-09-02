@@ -84,7 +84,7 @@ def get_graph(df):
     categories = LabelEncoder().fit_transform(categories)
     for node, cat in zip(nodes, categories):
         node['category'] = cat
-    g = Graph(title="拓扑结构", subtitle='IP:{} Links:{}'.format(len(nodes), len(links)), width=1200, height=500)
+    g = Graph(title="拓扑结构", subtitle='IP:{} Links:{}'.format(len(nodes), len(links)), width=800, height=600)
     g.add("", nodes, links, layout='circular', categories=list(categories))
     return g
 
@@ -124,22 +124,22 @@ def get_result_df(log_filename, start_time, end_time, smallest_size):
     else:
         # 读入
         df = read_log(log_filename, start_time, end_time)
-        df.to_csv(os.path.join(RESULT_DIR, '_df1.csv'), index=False)
+        # df.to_csv(os.path.join(RESULT_DIR, '{}_df1.csv'.format(result_filename)), index=False)
         # 清洗
         df = wash_log(df)
-        df.to_csv(os.path.join(RESULT_DIR, '_df2.csv'), index=False)
+        # df.to_csv(os.path.join(RESULT_DIR, '{}_df2.csv'.format(result_filename)), index=False)
         # 节点区分
         df = partition_entities(df)
-        df.to_csv(os.path.join(RESULT_DIR, '_df3.csv'), index=False)
+        # df.to_csv(os.path.join(RESULT_DIR, '{}_df3.csv'.format(result_filename)), index=False)
         # 边分区
         df = partition_links(df)
-        df.to_csv(os.path.join(RESULT_DIR, '_df4.csv'), index=False)
+        # df.to_csv(os.path.join(RESULT_DIR, '{}_df4.csv'.format(result_filename)), index=False)
         # 交换IP使领袖节点在同一列
         df = exchange_fields(df)
-        df.to_csv(os.path.join(RESULT_DIR, '_df5.csv'), index=False)
+        # df.to_csv(os.path.join(RESULT_DIR, '{}_df5.csv'.format(result_filename)), index=False)
         # 对拓扑相似的边聚类
         df = group_and_cluster(df)
-        df.to_csv(os.path.join(RESULT_DIR, '_df6.csv'), index=False)
+        # df.to_csv(os.path.join(RESULT_DIR, '{}_df6.csv'.format(result_filename)), index=False)
         # 标签重编码
         df = encode_tag(df)
         df.to_csv(os.path.join(RESULT_DIR, result_filename), index=False)
@@ -219,11 +219,12 @@ def get_hist(df, community_tag, feature_cols):
     bar = Bar("")
     for col in feature_cols:
         values_counts = community_table[col].value_counts()
-        for i in range(axis_min, axis_max + 1):
+        for i in range(axis_min-1, axis_max + 2):
             if i not in values_counts.index:
                 values_counts.loc[i] = 0
         values_counts = values_counts.sort_index()
-        bar.add(col, values_counts.index, values_counts.values, legend_pos='center', legend_top='bottom')
+        bar.add(col, values_counts.index, values_counts.values, legend_pos='center', legend_top='bottom', is_datazoom_show=True,
+                datazoom_type='slider')
     return bar
 
 
@@ -242,7 +243,8 @@ def detail(request, community_tag):
                                                  end_time=last_result.end_time,
                                                  smallest_size=last_result.smallest_size)
     feature_groups = [
-        ['port1', 'port2', 'proto'],
+        ['port1', 'port2'],
+        ['proto'],
         ['pkts12_min', 'pkts12_mid', 'pkts12_max'],
         ['pkts21_min', 'pkts21_mid', 'pkts21_max'],
         ['pkl12_min', 'pkl12_mid', 'pkl12_max'],
@@ -274,7 +276,8 @@ def read_log(filename, start_time, end_time):
     print('read_log')
     useful_columns = ['ip1', 'ip2', 'port1', 'port2', 'proto', 'pkts12', 'pkts21', 'bytes12', 'bytes21', 'etime',
                       'class', 'app']
-    log_df = pd.read_csv(os.path.join(DATA_SET_DIR, filename), usecols=useful_columns)
+    log_df = pd.read_csv(os.path.join(DATA_SET_DIR, filename), usecols=useful_columns, encoding='gbk')
+    log_df['class'] = log_df['app']
     start_time = time.mktime(time.strptime(start_time, "%Y-%m-%dT%H:%M"))
     end_time = time.mktime(time.strptime(end_time, "%Y-%m-%dT%H:%M"))
 

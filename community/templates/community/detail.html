@@ -5,11 +5,8 @@
 
   <h1>社团{{ community_tag }}</h1>
 {{graph}}
-
-  {% for bar in bars %}
-<div>
+{% for bar in bars %}
   {{bar}}
-</div>
 {% endfor %}
 
   <table class="table table-striped table-responsive w-75 p-3" >
